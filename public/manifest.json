@@ -1,0 +1,26 @@
+{
+  "name": "Paula Lanches — Controle de Fiado",
+  "short_name": "Paula Lanches",
+  "description": "Controle de fiado rápido para lanchonetes e cantinas escolares com vínculo de responsável e cobrança PIX.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#22328B",
+  "background_color": "#F4F8FC",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "/logo-paula-lanches.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo-paula-lanches.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+}
