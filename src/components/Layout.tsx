@@ -56,13 +56,14 @@ export function Layout({ children }: { children: ReactNode }) {
   const { tenant, isDemo, reminders, signOut } = useApp();
   const location = useLocation();
   const navigate = useNavigate();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      setCollapsed(
-        window.localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "true"
-      );
+      const saved = window.localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
+      if (saved !== null) {
+        setCollapsed(saved !== "false");
+      }
     }
   }, []);
 
