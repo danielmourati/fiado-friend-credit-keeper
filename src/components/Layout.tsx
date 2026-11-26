@@ -3,12 +3,16 @@ import {
   Crown,
   Home,
   LogOut,
+  PanelLeftClose,
+  PanelLeftOpen,
   Settings,
   Users,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useApp } from "@/contexts/AppContext";
+
+const SIDEBAR_COLLAPSED_KEY = "paula_lanches_sidebar_collapsed";
 
 const NAV_ITEMS = [
   { to: "/" as const, label: "Início", icon: Home },
@@ -52,6 +56,25 @@ export function Layout({ children }: { children: ReactNode }) {
   const { tenant, isDemo, reminders, signOut } = useApp();
   const location = useLocation();
   const navigate = useNavigate();
+  const [collapsed, setCollapsed] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setCollapsed(
+        window.localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "true"
+      );
+    }
+  }, []);
+
+  const toggleSidebar = () => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(next));
+      }
+      return next;
+    });
+  };
 
   const pendingRemindersCount = reminders.filter((r) => !r.concluido).length;
 
@@ -71,39 +94,78 @@ export function Layout({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen bg-[#F4F8FC] md:flex">
-      {/* Sidebar Compacta Desktop */}
-      <aside className="hidden md:flex md:w-64 md:shrink-0 md:flex-col md:bg-[#22328B] md:text-white">
-        <div className="flex items-center gap-3 border-b border-white/10 px-5 py-5">
-          <img
-            src={tenant?.logo_url || "/logo-paula-lanches.jpg"}
-            alt={tenant?.nome_loja || "Paula Lanches"}
-            className="h-11 w-11 rounded-xl border-2 border-[#0099F0] bg-white object-cover shadow-sm"
-          />
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-bold text-white">
-              {tenant?.nome_loja || "Paula Lanches"}
-            </p>
-            <div className="mt-0.5 flex items-center gap-1.5">
-              <span
-                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
-                  tenant?.plano === "PRO"
-                    ? "bg-[#0099F0] text-white"
-                    : "bg-white/15 text-white/90"
-                }`}
-              >
-                {tenant?.plano === "PRO" && <Crown className="h-2.5 w-2.5" />}
-                {tenant?.plano || "FREE"}
-              </span>
-              {isDemo && (
-                <span className="rounded-full bg-amber-400/20 px-2 py-0.5 text-[10px] font-semibold text-amber-200">
-                  DEMO
-                </span>
-              )}
-            </div>
+      {/* Sidebar Retrátil Tablet / Desktop */}
+      <aside
+        className={`hidden md:sticky md:top-0 md:flex md:h-screen md:shrink-0 md:flex-col md:bg-[#22328B] md:text-white md:transition-[width] md:duration-200 ${
+          collapsed ? "md:w-20" : "md:w-64"
+        }`}
+      >
+        {collapsed ? (
+          <div className="flex flex-col items-center gap-3 border-b border-white/10 px-2 py-4">
+            <Link to="/" title={tenant?.nome_loja || "Paula Lanches"}>
+              <img
+                src={tenant?.logo_url || "/logo-paula-lanches.jpg"}
+                alt={tenant?.nome_loja || "Paula Lanches"}
+                className="h-10 w-10 rounded-xl border-2 border-[#0099F0] bg-white object-cover shadow-sm"
+              />
+            </Link>
+            <button
+              type="button"
+              onClick={toggleSidebar}
+              title="Expandir menu lateral"
+              aria-label="Expandir menu lateral"
+              className="flex h-9 w-12 items-center justify-center rounded-xl bg-white/10 text-white/90 transition hover:bg-white/20 hover:text-white"
+            >
+              <PanelLeftOpen className="h-4.5 w-4.5" />
+            </button>
           </div>
-        </div>
+        ) : (
+          <div className="flex items-center justify-between gap-2 border-b border-white/10 px-4 py-5">
+            <Link to="/" className="flex min-w-0 flex-1 items-center gap-3">
+              <img
+                src={tenant?.logo_url || "/logo-paula-lanches.jpg"}
+                alt={tenant?.nome_loja || "Paula Lanches"}
+                className="h-11 w-11 shrink-0 rounded-xl border-2 border-[#0099F0] bg-white object-cover shadow-sm"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-bold text-white">
+                  {tenant?.nome_loja || "Paula Lanches"}
+                </p>
+                <div className="mt-0.5 flex items-center gap-1.5">
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+                      tenant?.plano === "PRO"
+                        ? "bg-[#0099F0] text-white"
+                        : "bg-white/15 text-white/90"
+                    }`}
+                  >
+                    {tenant?.plano === "PRO" && (
+                      <Crown className="h-2.5 w-2.5" />
+                    )}
+                    {tenant?.plano || "FREE"}
+                  </span>
+                  {isDemo && (
+                    <span className="rounded-full bg-amber-400/20 px-2 py-0.5 text-[10px] font-semibold text-amber-200">
+                      DEMO
+                    </span>
+                  )}
+                </div>
+              </div>
+            </Link>
 
-        <nav className="flex-1 space-y-1 px-3 py-4">
+            <button
+              type="button"
+              onClick={toggleSidebar}
+              title="Retrair menu lateral"
+              aria-label="Retrair menu lateral"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/10 text-white/85 transition hover:bg-white/20 hover:text-white"
+            >
+              <PanelLeftClose className="h-4.5 w-4.5" />
+            </button>
+          </div>
+        )}
+
+        <nav className="flex-1 space-y-1.5 px-3 py-4">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const active = isNavActive(item.to);
@@ -111,54 +173,79 @@ export function Layout({ children }: { children: ReactNode }) {
               <Link
                 key={item.to}
                 to={item.to}
-                className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-semibold transition ${
+                title={collapsed ? item.label : undefined}
+                className={`relative flex items-center rounded-xl text-sm font-semibold transition ${
+                  collapsed
+                    ? "justify-center px-2 py-3"
+                    : "justify-between px-3.5 py-2.5"
+                } ${
                   active
                     ? "bg-[#0099F0] text-white shadow-sm"
                     : "text-white/80 hover:bg-white/10 hover:text-white"
                 }`}
               >
                 <span className="flex items-center gap-3">
-                  <Icon className="h-4.5 w-4.5" />
-                  {item.label}
+                  <Icon className="h-5 w-5 shrink-0" />
+                  {!collapsed && <span>{item.label}</span>}
                 </span>
-                {item.to === "/lembretes" && pendingRemindersCount > 0 && (
-                  <span className="rounded-full bg-[#E11D48] px-2 py-0.5 text-[11px] font-bold text-white">
-                    {pendingRemindersCount}
-                  </span>
-                )}
+                {item.to === "/lembretes" &&
+                  pendingRemindersCount > 0 &&
+                  (collapsed ? (
+                    <span className="absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#E11D48] px-1 text-[10px] font-bold text-white">
+                      {pendingRemindersCount}
+                    </span>
+                  ) : (
+                    <span className="rounded-full bg-[#E11D48] px-2 py-0.5 text-[11px] font-bold text-white">
+                      {pendingRemindersCount}
+                    </span>
+                  ))}
               </Link>
             );
           })}
         </nav>
 
         <div className="border-t border-white/10 p-3">
-          {tenant?.plano === "FREE" && (
-            <Link
-              to="/configuracoes"
-              className="mb-3 block rounded-xl bg-white/10 p-3 text-xs transition hover:bg-white/15"
-            >
-              <p className="flex items-center gap-1.5 font-bold text-[#67C6FF]">
-                <Crown className="h-3.5 w-3.5" />
-                Assinar Plano PRO
-              </p>
-              <p className="mt-1 text-white/80">
-                Clientes ilimitados, atalhos rápidos e extrato por responsável.
-              </p>
-            </Link>
-          )}
+          {tenant?.plano === "FREE" &&
+            (collapsed ? (
+              <Link
+                to="/configuracoes"
+                title="Assinar Plano PRO"
+                className="mb-2 flex items-center justify-center rounded-xl bg-white/10 py-2.5 text-[#67C6FF] transition hover:bg-white/20"
+              >
+                <Crown className="h-5 w-5" />
+              </Link>
+            ) : (
+              <Link
+                to="/configuracoes"
+                className="mb-3 block rounded-xl bg-white/10 p-3 text-xs transition hover:bg-white/15"
+              >
+                <p className="flex items-center gap-1.5 font-bold text-[#67C6FF]">
+                  <Crown className="h-3.5 w-3.5" />
+                  Assinar Plano PRO
+                </p>
+                <p className="mt-1 text-white/80">
+                  Clientes ilimitados, atalhos rápidos e extrato por
+                  responsável.
+                </p>
+              </Link>
+            ))}
+
           <button
             type="button"
             onClick={() => void handleSignOut()}
-            className="flex w-full items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-sm font-medium text-white/80 transition hover:bg-white/10 hover:text-white"
+            title={collapsed ? "Sair da conta" : undefined}
+            className={`flex w-full items-center rounded-xl py-2.5 text-sm font-medium text-white/80 transition hover:bg-white/10 hover:text-white ${
+              collapsed ? "justify-center px-2" : "gap-2.5 px-3.5"
+            }`}
           >
-            <LogOut className="h-4 w-4" />
-            Sair da conta
+            <LogOut className="h-4.5 w-4.5 shrink-0" />
+            {!collapsed && <span>Sair da conta</span>}
           </button>
         </div>
       </aside>
 
       {/* Coluna Principal */}
-      <div className="flex min-h-screen flex-1 flex-col">
+      <div className="flex min-h-screen min-w-0 flex-1 flex-col">
         {/* Header Mobile */}
         <header className="pt-safe sticky top-0 z-30 flex items-center justify-between bg-[#22328B] px-4 py-3 text-white shadow-sm md:hidden">
           <Link to="/" className="flex min-w-0 items-center gap-2.5">
