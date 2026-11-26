@@ -6,27 +6,67 @@ import {
   Settings,
   Users,
 } from "lucide-react";
-import { Link, Outlet, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "@tanstack/react-router";
+import { useEffect, type ReactNode } from "react";
 import { useApp } from "@/contexts/AppContext";
 
 const NAV_ITEMS = [
-  { to: "/", label: "Início", icon: Home },
-  { to: "/responsaveis", label: "Pais / Resp.", icon: Users },
-  { to: "/lembretes", label: "Lembretes", icon: Bell },
-  { to: "/configuracoes", label: "Ajustes", icon: Settings },
+  { to: "/" as const, label: "Início", icon: Home },
+  { to: "/responsaveis" as const, label: "Pais / Resp.", icon: Users },
+  { to: "/lembretes" as const, label: "Lembretes", icon: Bell },
+  { to: "/configuracoes" as const, label: "Ajustes", icon: Settings },
 ];
 
-export function Layout() {
+export function AuthenticatedShell({ children }: { children: ReactNode }) {
+  const { user, tenant, loading } = useApp();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (loading) return;
+    if (!user) {
+      void navigate({ to: "/login", replace: true });
+    } else if (!tenant) {
+      void navigate({ to: "/onboarding", replace: true });
+    }
+  }, [loading, user, tenant, navigate]);
+
+  if (loading || !user || !tenant) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-[#F4F8FC]">
+        <img
+          src="/logo-paula-lanches.jpg"
+          alt="Paula Lanches"
+          className="h-16 w-16 animate-pulse rounded-full border-2 border-[#0099F0] object-cover"
+        />
+        <p className="text-xs font-bold text-[#22328B]">
+          Carregando Paula Lanches...
+        </p>
+      </div>
+    );
+  }
+
+  return <Layout>{children}</Layout>;
+}
+
+export function Layout({ children }: { children: ReactNode }) {
   const { tenant, isDemo, reminders, signOut } = useApp();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const pendingRemindersCount = reminders.filter((r) => !r.concluido).length;
 
   const isNavActive = (path: string) => {
     if (path === "/") {
-      return location.pathname === "/" || location.pathname.startsWith("/cliente/");
+      return (
+        location.pathname === "/" || location.pathname.startsWith("/cliente/")
+      );
     }
     return location.pathname.startsWith(path);
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    void navigate({ to: "/login", replace: true });
   };
 
   return (
@@ -108,7 +148,7 @@ export function Layout() {
           )}
           <button
             type="button"
-            onClick={() => void signOut()}
+            onClick={() => void handleSignOut()}
             className="flex w-full items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-sm font-medium text-white/80 transition hover:bg-white/10 hover:text-white"
           >
             <LogOut className="h-4 w-4" />
@@ -157,7 +197,7 @@ export function Layout() {
 
         {/* Conteúdo das páginas */}
         <main className="mx-auto w-full max-w-4xl flex-1 px-4 pb-24 pt-4 md:px-8 md:pb-10 md:pt-6">
-          <Outlet />
+          {children}
         </main>
 
         {/* Barra Inferior Mobile */}

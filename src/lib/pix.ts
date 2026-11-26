@@ -5,9 +5,9 @@ export interface PixBrCodeInput {
   pixChave: string;
   nomeRecebedor: string;
   cidade: string;
-  valor?: number;
-  txid?: string;
-  descricao?: string;
+  valor?: number | undefined;
+  txid?: string | undefined;
+  descricao?: string | undefined;
 }
 
 function formatEmvField(id: string, value: string): string {
@@ -26,7 +26,10 @@ export function normalizeAscii(value: string, maxLength: number): string {
   return cleaned.slice(0, maxLength);
 }
 
-export function formatPixKeyForPayload(type: PixKeyType, rawKey: string): string {
+export function formatPixKeyForPayload(
+  type: PixKeyType,
+  rawKey: string
+): string {
   const trimmed = rawKey.trim();
   switch (type) {
     case "CPF":
@@ -34,7 +37,10 @@ export function formatPixKeyForPayload(type: PixKeyType, rawKey: string): string
       return trimmed.replace(/\D/g, "");
     case "TELEFONE": {
       const digits = trimmed.replace(/\D/g, "");
-      if (digits.startsWith("55") && (digits.length === 12 || digits.length === 13)) {
+      if (
+        digits.startsWith("55") &&
+        (digits.length === 12 || digits.length === 13)
+      ) {
         return `+${digits}`;
       }
       return `+55${digits}`;
@@ -46,7 +52,10 @@ export function formatPixKeyForPayload(type: PixKeyType, rawKey: string): string
   }
 }
 
-export function validatePixKey(type: PixKeyType, rawKey: string): string | null {
+export function validatePixKey(
+  type: PixKeyType,
+  rawKey: string
+): string | null {
   const key = rawKey.trim();
   if (!key) return "Informe a chave PIX.";
 
@@ -111,14 +120,13 @@ export function generatePixBrCode(input: PixBrCodeInput): string {
     throw new Error("Chave PIX inválida para geração do BR Code.");
   }
 
-  const merchantName = normalizeAscii(input.nomeRecebedor || "RECEBEDOR", 25) || "RECEBEDOR";
+  const merchantName =
+    normalizeAscii(input.nomeRecebedor || "RECEBEDOR", 25) || "RECEBEDOR";
   const merchantCity = normalizeAscii(input.cidade || "BRASIL", 15) || "BRASIL";
   const txid = sanitizeTxid(input.txid);
 
-  // 26 - Merchant Account Information (GUI br.gov.bcb.pix + Chave + Descrição opcional)
   let maiContent =
-    formatEmvField("00", "br.gov.bcb.pix") +
-    formatEmvField("01", formattedKey);
+    formatEmvField("00", "br.gov.bcb.pix") + formatEmvField("01", formattedKey);
 
   if (input.descricao) {
     const maxDescLen = Math.max(0, 99 - maiContent.length - 4);
@@ -129,19 +137,19 @@ export function generatePixBrCode(input: PixBrCodeInput): string {
   }
 
   let payload = "";
-  payload += formatEmvField("00", "01"); // Payload Format Indicator
-  payload += formatEmvField("26", maiContent); // Merchant Account Information
-  payload += formatEmvField("52", "0000"); // Merchant Category Code
-  payload += formatEmvField("53", "986"); // Transaction Currency (BRL = 986)
+  payload += formatEmvField("00", "01");
+  payload += formatEmvField("26", maiContent);
+  payload += formatEmvField("52", "0000");
+  payload += formatEmvField("53", "986");
 
   if (typeof input.valor === "number" && input.valor > 0) {
     payload += formatEmvField("54", input.valor.toFixed(2));
   }
 
-  payload += formatEmvField("58", "BR"); // Country Code
+  payload += formatEmvField("58", "BR");
   payload += formatEmvField("59", merchantName);
   payload += formatEmvField("60", merchantCity);
-  payload += formatEmvField("62", formatEmvField("05", txid)); // Additional Data Field (TXID)
+  payload += formatEmvField("62", formatEmvField("05", txid));
 
   const payloadWithCrcPrefix = `${payload}6304`;
   const crc = crc16CcittFalse(payloadWithCrcPrefix);

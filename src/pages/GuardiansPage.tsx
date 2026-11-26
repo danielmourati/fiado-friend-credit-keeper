@@ -9,7 +9,7 @@ import {
   X,
 } from "lucide-react";
 import { useMemo, useState, type FormEvent } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "@tanstack/react-router";
 import { useApp } from "@/contexts/AppContext";
 import {
   formatCurrencyBRL,
@@ -26,7 +26,8 @@ import * as dataService from "@/services/dataService";
 import type { Guardian } from "@/types/database";
 
 export function GuardiansPage() {
-  const { tenant, isDemo, guardians, customers, refreshAll, showToast } = useApp();
+  const { tenant, isDemo, guardians, customers, refreshAll, showToast } =
+    useApp();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Guardian | null>(null);
@@ -124,7 +125,9 @@ export function GuardiansPage() {
     }
   };
 
-  const handleChargeConsolidated = (summary: (typeof guardianSummaries)[number]) => {
+  const handleChargeConsolidated = (
+    summary: (typeof guardianSummaries)[number]
+  ) => {
     if (!tenant) return;
     if (!isPro) {
       showToast(
@@ -258,7 +261,6 @@ export function GuardiansPage() {
                 </div>
               </div>
 
-              {/* Alunos vinculados */}
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {summary.children.length === 0 ? (
                   <span className="text-xs text-slate-400">
@@ -268,7 +270,8 @@ export function GuardiansPage() {
                   summary.children.map((child) => (
                     <Link
                       key={child.id}
-                      to={`/cliente/${child.id}`}
+                      to="/cliente/$id"
+                      params={{ id: child.id }}
                       className="inline-flex items-center gap-1.5 rounded-full bg-[#F4F8FC] px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-[#E8F5FE]"
                     >
                       <span>{child.nome}</span>
@@ -307,14 +310,15 @@ export function GuardiansPage() {
 
                 <div className="flex items-center gap-2">
                   {isPro && (
-                    <Link
-                      to={`/r/${summary.guardian.id}`}
+                    <a
+                      href={`/r/${summary.guardian.id}`}
                       target="_blank"
+                      rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 rounded-xl bg-[#E8F5FE] px-3 py-1.5 text-xs font-bold text-[#22328B] hover:bg-[#d5edfd]"
                     >
                       <ExternalLink className="h-3.5 w-3.5" />
                       Extrato /r
-                    </Link>
+                    </a>
                   )}
                   <button
                     type="button"
@@ -347,7 +351,10 @@ export function GuardiansPage() {
               </button>
             </div>
 
-            <form onSubmit={(e) => void handleSave(e)} className="mt-4 space-y-3.5">
+            <form
+              onSubmit={(e) => void handleSave(e)}
+              className="mt-4 space-y-3.5"
+            >
               <div>
                 <label className="block text-xs font-bold uppercase text-slate-600">
                   Nome *

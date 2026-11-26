@@ -32,6 +32,16 @@ function daysAgoDate(days: number): string {
 
 export function createInitialDemoDatabase(): DemoDatabase {
   const tenantId = "11111111-1111-4111-8111-111111111111";
+  const g1Id = "22222222-2222-4222-8222-222222222201";
+  const g2Id = "22222222-2222-4222-8222-222222222202";
+  const g3Id = "22222222-2222-4222-8222-222222222203";
+
+  const c1Id = "33333333-3333-4333-8333-333333333301";
+  const c2Id = "33333333-3333-4333-8333-333333333302";
+  const c3Id = "33333333-3333-4333-8333-333333333303";
+  const c4Id = "33333333-3333-4333-8333-333333333304";
+  const c5Id = "33333333-3333-4333-8333-333333333305";
+  const c6Id = "33333333-3333-4333-8333-333333333306";
 
   const tenant: Tenant = {
     id: tenantId,
@@ -60,7 +70,7 @@ export function createInitialDemoDatabase(): DemoDatabase {
 
   const guardians: Guardian[] = [
     {
-      id: "22222222-2222-4222-8222-222222222201",
+      id: g1Id,
       tenant_id: tenantId,
       nome: "Mariana Oliveira (Mãe)",
       whatsapp: "5586999441122",
@@ -68,7 +78,7 @@ export function createInitialDemoDatabase(): DemoDatabase {
       created_at: daysAgoIso(30),
     },
     {
-      id: "22222222-2222-4222-8222-222222222202",
+      id: g2Id,
       tenant_id: tenantId,
       nome: "Carlos Eduardo Souza (Pai)",
       whatsapp: "5586998773344",
@@ -76,7 +86,7 @@ export function createInitialDemoDatabase(): DemoDatabase {
       created_at: daysAgoIso(25),
     },
     {
-      id: "22222222-2222-4222-8222-222222222203",
+      id: g3Id,
       tenant_id: tenantId,
       nome: "Fernanda Costa (Mãe)",
       whatsapp: "5586999118899",
@@ -87,9 +97,9 @@ export function createInitialDemoDatabase(): DemoDatabase {
 
   const customers: Customer[] = [
     {
-      id: "33333333-3333-4333-8333-333333333301",
+      id: c1Id,
       tenant_id: tenantId,
-      guardian_id: guardians[0].id,
+      guardian_id: g1Id,
       nome: "Lucas Oliveira",
       turma_ou_apelido: "7º Ano B - Manhã",
       whatsapp: null,
@@ -100,9 +110,9 @@ export function createInitialDemoDatabase(): DemoDatabase {
       created_at: daysAgoIso(30),
     },
     {
-      id: "33333333-3333-4333-8333-333333333302",
+      id: c2Id,
       tenant_id: tenantId,
-      guardian_id: guardians[0].id,
+      guardian_id: g1Id,
       nome: "Sofia Oliveira",
       turma_ou_apelido: "4º Ano A - Manhã",
       whatsapp: null,
@@ -113,9 +123,9 @@ export function createInitialDemoDatabase(): DemoDatabase {
       created_at: daysAgoIso(30),
     },
     {
-      id: "33333333-3333-4333-8333-333333333303",
+      id: c3Id,
       tenant_id: tenantId,
-      guardian_id: guardians[1].id,
+      guardian_id: g2Id,
       nome: "Pedro Henrique Souza",
       turma_ou_apelido: "9º Ano A - Tarde",
       whatsapp: null,
@@ -126,7 +136,7 @@ export function createInitialDemoDatabase(): DemoDatabase {
       created_at: daysAgoIso(25),
     },
     {
-      id: "33333333-3333-4333-8333-333333333304",
+      id: c4Id,
       tenant_id: tenantId,
       guardian_id: null,
       nome: "Prof. Ana Cláudia",
@@ -139,9 +149,9 @@ export function createInitialDemoDatabase(): DemoDatabase {
       created_at: daysAgoIso(22),
     },
     {
-      id: "33333333-3333-4333-8333-333333333305",
+      id: c5Id,
       tenant_id: tenantId,
-      guardian_id: guardians[2].id,
+      guardian_id: g3Id,
       nome: "Beatriz Costa",
       turma_ou_apelido: "6º Ano C - Tarde",
       whatsapp: null,
@@ -152,7 +162,7 @@ export function createInitialDemoDatabase(): DemoDatabase {
       created_at: daysAgoIso(20),
     },
     {
-      id: "33333333-3333-4333-8333-333333333306",
+      id: c6Id,
       tenant_id: tenantId,
       guardian_id: null,
       nome: "Marcos Vinicius (Portaria)",
@@ -167,11 +177,10 @@ export function createInitialDemoDatabase(): DemoDatabase {
   ];
 
   const transactions: Transaction[] = [
-    // Lucas Oliveira (saldo = 28.50)
     {
       id: "44444444-4444-4444-8444-444444444401",
       tenant_id: tenantId,
-      customer_id: customers[0].id,
+      customer_id: c1Id,
       tipo: "FIADO",
       valor: 11.0,
       descricao: "Salgado + Suco Natural",
@@ -181,7 +190,7 @@ export function createInitialDemoDatabase(): DemoDatabase {
     {
       id: "44444444-4444-4444-8444-444444444402",
       tenant_id: tenantId,
-      customer_id: customers[0].id,
+      customer_id: c1Id,
       tipo: "FIADO",
       valor: 12.0,
       descricao: "Combo Lanche",
@@ -191,7 +200,7 @@ export function createInitialDemoDatabase(): DemoDatabase {
     {
       id: "44444444-4444-4444-8444-444444444403",
       tenant_id: tenantId,
-      customer_id: customers[0].id,
+      customer_id: c1Id,
       tipo: "RECEBIMENTO",
       valor: 8.0,
       descricao: "Pagamento parcial no balcão",
@@ -201,18 +210,17 @@ export function createInitialDemoDatabase(): DemoDatabase {
     {
       id: "44444444-4444-4444-8444-444444444404",
       tenant_id: tenantId,
-      customer_id: customers[0].id,
+      customer_id: c1Id,
       tipo: "FIADO",
       valor: 13.5,
       descricao: "Misto Quente + Refrigerante",
       data_lancamento: daysAgoDate(1),
       created_at: daysAgoIso(1, 10),
     },
-    // Sofia Oliveira (saldo = 14.00)
     {
       id: "44444444-4444-4444-8444-444444444405",
       tenant_id: tenantId,
-      customer_id: customers[1].id,
+      customer_id: c2Id,
       tipo: "FIADO",
       valor: 6.0,
       descricao: "Salgado",
@@ -222,18 +230,17 @@ export function createInitialDemoDatabase(): DemoDatabase {
     {
       id: "44444444-4444-4444-8444-444444444406",
       tenant_id: tenantId,
-      customer_id: customers[1].id,
+      customer_id: c2Id,
       tipo: "FIADO",
       valor: 8.0,
       descricao: "Suco Natural + Água",
       data_lancamento: daysAgoDate(2),
       created_at: daysAgoIso(2, 9),
     },
-    // Pedro Henrique Souza (saldo = 46.00 - acima do limite 40.00)
     {
       id: "44444444-4444-4444-8444-444444444407",
       tenant_id: tenantId,
-      customer_id: customers[2].id,
+      customer_id: c3Id,
       tipo: "FIADO",
       valor: 24.0,
       descricao: "2x Combo Lanche",
@@ -243,18 +250,17 @@ export function createInitialDemoDatabase(): DemoDatabase {
     {
       id: "44444444-4444-4444-8444-444444444408",
       tenant_id: tenantId,
-      customer_id: customers[2].id,
+      customer_id: c3Id,
       tipo: "FIADO",
       valor: 22.0,
       descricao: "Misto Quente + Salgado + Suco Natural + Água",
       data_lancamento: daysAgoDate(6),
       created_at: daysAgoIso(6, 15),
     },
-    // Prof. Ana Cláudia (saldo = 19.50)
     {
       id: "44444444-4444-4444-8444-444444444409",
       tenant_id: tenantId,
-      customer_id: customers[3].id,
+      customer_id: c4Id,
       tipo: "FIADO",
       valor: 11.5,
       descricao: "Salgado + Refrigerante",
@@ -264,18 +270,17 @@ export function createInitialDemoDatabase(): DemoDatabase {
     {
       id: "44444444-4444-4444-8444-444444444410",
       tenant_id: tenantId,
-      customer_id: customers[3].id,
+      customer_id: c4Id,
       tipo: "FIADO",
       valor: 8.0,
       descricao: "Misto Quente",
       data_lancamento: daysAgoDate(3),
       created_at: daysAgoIso(3, 11),
     },
-    // Beatriz Costa (saldo = 0.00)
     {
       id: "44444444-4444-4444-8444-444444444411",
       tenant_id: tenantId,
-      customer_id: customers[4].id,
+      customer_id: c5Id,
       tipo: "FIADO",
       valor: 12.0,
       descricao: "Combo Lanche",
@@ -285,18 +290,17 @@ export function createInitialDemoDatabase(): DemoDatabase {
     {
       id: "44444444-4444-4444-8444-444444444412",
       tenant_id: tenantId,
-      customer_id: customers[4].id,
+      customer_id: c5Id,
       tipo: "RECEBIMENTO",
       valor: 12.0,
       descricao: "Quitação PIX",
       data_lancamento: daysAgoDate(4),
       created_at: daysAgoIso(4, 16),
     },
-    // Marcos Vinicius (saldo = 11.00)
     {
       id: "44444444-4444-4444-8444-444444444413",
       tenant_id: tenantId,
-      customer_id: customers[5].id,
+      customer_id: c6Id,
       tipo: "FIADO",
       valor: 11.0,
       descricao: "Salgado + Suco Natural",
@@ -309,7 +313,7 @@ export function createInitialDemoDatabase(): DemoDatabase {
     {
       id: "55555555-5555-4555-8555-555555555501",
       tenant_id: tenantId,
-      customer_id: customers[2].id,
+      customer_id: c3Id,
       data_lembrete: daysAgoDate(0),
       concluido: false,
       created_at: daysAgoIso(2),
@@ -317,7 +321,7 @@ export function createInitialDemoDatabase(): DemoDatabase {
     {
       id: "55555555-5555-4555-8555-555555555502",
       tenant_id: tenantId,
-      customer_id: customers[0].id,
+      customer_id: c1Id,
       data_lembrete: daysAgoDate(-1),
       concluido: false,
       created_at: daysAgoIso(1),

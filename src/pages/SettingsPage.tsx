@@ -12,7 +12,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate } from "@tanstack/react-router";
 import { useApp } from "@/contexts/AppContext";
 import {
   formatCurrencyBRL,
@@ -25,7 +25,7 @@ import type { PixKeyType, QuickShortcut } from "@/types/database";
 
 export function SettingsPage() {
   const { tenant, isDemo, refreshAll, showToast, signOut } = useApp();
-  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const [nomeLoja, setNomeLoja] = useState("");
   const [mensagemWhatsapp, setMensagemWhatsapp] = useState("");
@@ -56,7 +56,9 @@ export function SettingsPage() {
   }, [tenant]);
 
   useEffect(() => {
-    const status = searchParams.get("assinatura");
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get("assinatura");
     if (status === "sucesso") {
       showToast(
         "Pagamento recebido! Seu Plano PRO será ativado em instantes.",
@@ -68,7 +70,7 @@ export function SettingsPage() {
     } else if (status === "erro") {
       showToast("Não foi possível concluir a assinatura.", "error");
     }
-  }, [searchParams, refreshAll, showToast]);
+  }, [refreshAll, showToast]);
 
   if (!tenant) return null;
 
@@ -206,6 +208,11 @@ export function SettingsPage() {
     showToast("Dados de demonstração restaurados!");
   };
 
+  const handleSignOut = async () => {
+    await signOut();
+    void navigate({ to: "/login", replace: true });
+  };
+
   return (
     <div className="space-y-5">
       <div>
@@ -217,7 +224,6 @@ export function SettingsPage() {
         </p>
       </div>
 
-      {/* Meu Plano (FREE vs PRO) */}
       <section className="rounded-3xl bg-gradient-to-br from-[#22328B] to-[#0099F0] p-5 text-white shadow-lg">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -303,7 +309,6 @@ export function SettingsPage() {
         </div>
       </section>
 
-      {/* Chave PIX (Banco Central) */}
       <section className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs">
         <div className="flex items-center gap-2">
           <QrCode className="h-5 w-5 text-[#0099F0]" />
@@ -312,7 +317,10 @@ export function SettingsPage() {
           </h2>
         </div>
 
-        <form onSubmit={(e) => void handleSavePix(e)} className="mt-4 space-y-3">
+        <form
+          onSubmit={(e) => void handleSavePix(e)}
+          className="mt-4 space-y-3"
+        >
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div>
               <label className="block text-xs font-bold uppercase text-slate-600">
@@ -384,7 +392,6 @@ export function SettingsPage() {
         </form>
       </section>
 
-      {/* Atalhos Rápidos */}
       <section className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -465,7 +472,6 @@ export function SettingsPage() {
         </button>
       </section>
 
-      {/* Dados da Cantina & Mensagem WhatsApp */}
       <section className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs">
         <div className="flex items-center gap-2">
           <Store className="h-5 w-5 text-[#0099F0]" />
@@ -474,7 +480,10 @@ export function SettingsPage() {
           </h2>
         </div>
 
-        <form onSubmit={(e) => void handleSaveStore(e)} className="mt-4 space-y-3">
+        <form
+          onSubmit={(e) => void handleSaveStore(e)}
+          className="mt-4 space-y-3"
+        >
           <div>
             <label className="block text-xs font-bold uppercase text-slate-600">
               Nome da Lanchonete / Cantina
@@ -515,11 +524,10 @@ export function SettingsPage() {
         </form>
       </section>
 
-      {/* Sair no Mobile */}
       <div className="md:hidden">
         <button
           type="button"
-          onClick={() => void signOut()}
+          onClick={() => void handleSignOut()}
           className="flex w-full items-center justify-center gap-2 rounded-2xl border border-rose-200 bg-white py-3 text-sm font-bold text-[#E11D48]"
         >
           <LogOut className="h-4 w-4" />

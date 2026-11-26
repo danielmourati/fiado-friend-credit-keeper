@@ -14,7 +14,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { CustomerFormModal } from "@/components/CustomerFormModal";
 import { PixQrModal } from "@/components/PixQrModal";
 import { TransactionModal } from "@/components/TransactionModal";
@@ -35,14 +35,13 @@ import {
 import * as dataService from "@/services/dataService";
 import type { Transaction, TransactionType } from "@/types/database";
 
-export function CustomerDetailPage() {
-  const { id } = useParams<{ id: string }>();
+export function CustomerDetailPage({ customerId }: { customerId: string }) {
   const navigate = useNavigate();
   const { tenant, isDemo, customers, refreshAll, showToast } = useApp();
 
   const customer = useMemo(
-    () => customers.find((c) => c.id === id) ?? null,
-    [customers, id]
+    () => customers.find((c) => c.id === customerId) ?? null,
+    [customers, customerId]
   );
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -56,10 +55,10 @@ export function CustomerDetailPage() {
   const [zeroing, setZeroing] = useState(false);
 
   const loadTransactions = useCallback(async () => {
-    if (!id) return;
+    if (!customerId) return;
     setLoadingTx(true);
     try {
-      const list = await dataService.listTransactions(isDemo, id);
+      const list = await dataService.listTransactions(isDemo, customerId);
       setTransactions(list);
     } catch (err) {
       showToast(
@@ -69,7 +68,7 @@ export function CustomerDetailPage() {
     } finally {
       setLoadingTx(false);
     }
-  }, [id, isDemo, showToast]);
+  }, [customerId, isDemo, showToast]);
 
   useEffect(() => {
     void loadTransactions();
@@ -145,7 +144,11 @@ export function CustomerDetailPage() {
       pixCopiaECola: pixCode,
     });
 
-    window.open(buildWhatsAppUrl(payerPhone, message), "_blank", "noopener,noreferrer");
+    window.open(
+      buildWhatsAppUrl(payerPhone, message),
+      "_blank",
+      "noopener,noreferrer"
+    );
   };
 
   const handleCopyPublicLink = async () => {
@@ -213,7 +216,7 @@ export function CustomerDetailPage() {
       await dataService.deleteCustomer(isDemo, customer.id);
       await refreshAll();
       showToast("Cliente removido.");
-      navigate("/", { replace: true });
+      void navigate({ to: "/", replace: true });
     } catch (err) {
       showToast(
         err instanceof Error ? err.message : "Erro ao excluir cliente.",
@@ -224,7 +227,6 @@ export function CustomerDetailPage() {
 
   return (
     <div className="space-y-4">
-      {/* Navegação superior */}
       <div className="flex items-center justify-between">
         <Link
           to="/"
@@ -254,7 +256,6 @@ export function CustomerDetailPage() {
         </div>
       </div>
 
-      {/* Card Superior */}
       <section className="rounded-3xl bg-gradient-to-br from-[#22328B] to-[#1A2872] p-5 text-white shadow-lg">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -322,7 +323,6 @@ export function CustomerDetailPage() {
           </button>
         </div>
 
-        {/* Link público do extrato */}
         <div className="mt-3 flex items-center justify-between gap-2 rounded-xl bg-black/20 px-3 py-2 text-xs">
           <span className="truncate text-sky-100">
             Extrato público: /c/{customer.public_token.slice(0, 8)}...
@@ -336,19 +336,19 @@ export function CustomerDetailPage() {
               <Copy className="h-3 w-3" />
               Copiar
             </button>
-            <Link
-              to={`/c/${customer.public_token}`}
+            <a
+              href={`/c/${customer.public_token}`}
               target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center gap-1 rounded-lg bg-white/15 px-2.5 py-1 font-bold hover:bg-white/25"
             >
               <ExternalLink className="h-3 w-3" />
               Abrir
-            </Link>
+            </a>
           </div>
         </div>
       </section>
 
-      {/* Botões de Ação: + Adicionar e Zerar */}
       <section className="grid grid-cols-2 gap-3">
         <button
           type="button"
@@ -373,7 +373,6 @@ export function CustomerDetailPage() {
         </button>
       </section>
 
-      {/* Histórico de Lançamentos */}
       <section className="rounded-3xl border border-slate-200/80 bg-white p-4 shadow-xs">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-base font-extrabold text-slate-900">
@@ -445,8 +444,7 @@ export function CustomerDetailPage() {
                         isFiado ? "text-[#E11D48]" : "text-[#10B981]"
                       }`}
                     >
-                      {isFiado ? "-" : "+"}{" "}
-                      {formatCurrencyBRL(tx.valor)}
+                      {isFiado ? "-" : "+"} {formatCurrencyBRL(tx.valor)}
                     </span>
                     <button
                       type="button"
@@ -464,7 +462,6 @@ export function CustomerDetailPage() {
         </div>
       </section>
 
-      {/* Modal de Confirmação de Zerar Conta */}
       {zeroConfirmOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4">
           <div className="w-full max-w-sm rounded-3xl bg-white p-6 text-center shadow-2xl">

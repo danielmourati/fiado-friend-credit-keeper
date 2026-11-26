@@ -28,13 +28,15 @@ interface TransactionModalProps {
   open: boolean;
   onClose: () => void;
   customer: CustomerWithGuardian | null;
-  initialType?: TransactionType;
-  onSaved?: (result: {
-    customer: CustomerWithGuardian;
-    tipo: TransactionType;
-    valor: number;
-    openQr: boolean;
-  }) => void;
+  initialType?: TransactionType | undefined;
+  onSaved?:
+    | ((result: {
+        customer: CustomerWithGuardian;
+        tipo: TransactionType;
+        valor: number;
+        openQr: boolean;
+      }) => void)
+    | undefined;
 }
 
 export function TransactionModal({
@@ -91,7 +93,8 @@ export function TransactionModal({
       showToast("Atalhos rápidos fazem parte do Plano PRO.", "info");
       return;
     }
-    const nextValue = Math.round((valorNumerico + Number(chip.valor)) * 100) / 100;
+    const nextValue =
+      Math.round((valorNumerico + Number(chip.valor)) * 100) / 100;
     setValorStr(numberToMaskedCurrency(nextValue));
     setDescricao((prev) => {
       const trimmed = prev.trim();
@@ -191,7 +194,6 @@ export function TransactionModal({
           onSubmit={(e) => void handleSave(false, e)}
           className="mt-4 space-y-4"
         >
-          {/* Seletor Fiado | Recebimento */}
           <div className="grid grid-cols-2 gap-2 rounded-2xl bg-[#F4F8FC] p-1">
             <button
               type="button"
@@ -227,7 +229,6 @@ export function TransactionModal({
             </button>
           </div>
 
-          {/* Atalhos Rápidos (Chips) */}
           {tipo === "FIADO" && shortcuts.length > 0 && (
             <div>
               <div className="mb-1.5 flex items-center justify-between">
@@ -261,7 +262,6 @@ export function TransactionModal({
             </div>
           )}
 
-          {/* Campo Valor em Destaque */}
           <div>
             <label className="block text-xs font-bold uppercase tracking-wide text-slate-600">
               Valor (R$) *
@@ -289,7 +289,6 @@ export function TransactionModal({
             </div>
           </div>
 
-          {/* Alerta de Limite de Crédito */}
           {exceedsCreditLimit && (
             <div className="rounded-2xl border-2 border-amber-400 bg-amber-50 p-3.5">
               <div className="flex items-start gap-2.5">
@@ -321,7 +320,6 @@ export function TransactionModal({
             </div>
           )}
 
-          {/* Descrição e Data */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="sm:col-span-2">
               <label className="block text-xs font-bold uppercase tracking-wide text-slate-600">
@@ -352,7 +350,6 @@ export function TransactionModal({
             </div>
           </div>
 
-          {/* Checkbox Lembrete */}
           {tipo === "FIADO" && (
             <div className="rounded-xl border border-slate-200 bg-[#F4F8FC] px-3.5 py-2.5">
               <div className="flex items-center justify-between gap-2">
@@ -385,7 +382,6 @@ export function TransactionModal({
             </div>
           )}
 
-          {/* Rodapé com 2 botões */}
           <div className="grid grid-cols-1 gap-2.5 pt-1 sm:grid-cols-2">
             <button
               type="submit"

@@ -7,8 +7,8 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
-import { useState, type FormEvent } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState, type FormEvent } from "react";
+import { Link } from "@tanstack/react-router";
 import { useApp } from "@/contexts/AppContext";
 import {
   formatCurrencyBRL,
@@ -25,11 +25,18 @@ import * as dataService from "@/services/dataService";
 import type { ReminderWithCustomer } from "@/types/database";
 
 export function RemindersPage() {
-  const { tenant, isDemo, customers, reminders, refreshAll, showToast } = useApp();
+  const { tenant, isDemo, customers, reminders, refreshAll, showToast } =
+    useApp();
 
   const [customerId, setCustomerId] = useState(customers[0]?.id ?? "");
   const [date, setDate] = useState(todayIsoDate());
   const [creating, setCreating] = useState(false);
+
+  useEffect(() => {
+    if (!customerId && customers[0]?.id) {
+      setCustomerId(customers[0].id);
+    }
+  }, [customerId, customers]);
 
   const isPro = tenant?.plano === "PRO";
 
@@ -113,7 +120,11 @@ export function RemindersPage() {
       publicLink: link,
       pixCopiaECola: pixCode,
     });
-    window.open(buildWhatsAppUrl(phone, msg), "_blank", "noopener,noreferrer");
+    window.open(
+      buildWhatsAppUrl(phone, msg),
+      "_blank",
+      "noopener,noreferrer"
+    );
   };
 
   return (
@@ -233,7 +244,8 @@ export function RemindersPage() {
 
                       <div className="min-w-0">
                         <Link
-                          to={`/cliente/${r.customer_id}`}
+                          to="/cliente/$id"
+                          params={{ id: r.customer_id }}
                           className={`block truncate text-sm font-bold ${
                             r.concluido
                               ? "text-slate-500 line-through"

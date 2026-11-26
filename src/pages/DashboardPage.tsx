@@ -10,7 +10,7 @@ import {
   Users,
 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "@tanstack/react-router";
 import { CustomerFormModal } from "@/components/CustomerFormModal";
 import { PixQrModal } from "@/components/PixQrModal";
 import { TransactionModal } from "@/components/TransactionModal";
@@ -71,7 +71,8 @@ export function DashboardPage() {
 
     return [...list].sort((a, b) => {
       if (sortMode === "MAIOR_DIVIDA") {
-        if (b.saldo_atual !== a.saldo_atual) return b.saldo_atual - a.saldo_atual;
+        if (b.saldo_atual !== a.saldo_atual)
+          return b.saldo_atual - a.saldo_atual;
         return a.nome.localeCompare(b.nome, "pt-BR");
       }
       if (sortMode === "MAIS_ANTIGO") {
@@ -118,12 +119,15 @@ export function DashboardPage() {
       publicLink: link,
       pixCopiaECola: pixCode,
     });
-    window.open(buildWhatsAppUrl(phone, msg), "_blank", "noopener,noreferrer");
+    window.open(
+      buildWhatsAppUrl(phone, msg),
+      "_blank",
+      "noopener,noreferrer"
+    );
   };
 
   return (
     <div className="space-y-4">
-      {/* Card Resumo Geral */}
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#22328B] via-[#1C2A78] to-[#0099F0] p-5 text-white shadow-lg">
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -166,7 +170,6 @@ export function DashboardPage() {
         </div>
       </section>
 
-      {/* Ações Rápidas: Busca + Botão Novo Cliente */}
       <section className="flex flex-col gap-2.5 sm:flex-row">
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-slate-400" />
@@ -183,12 +186,11 @@ export function DashboardPage() {
           onClick={() => setCustomerModalOpen(true)}
           className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#22328B] px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#18256B] active:scale-[0.99]"
         >
-          <UserPlus className="h-4.5 w-4.5 text-[#7AD0FF]" />
-          + Novo Cliente / Aluno
+          <UserPlus className="h-4.5 w-4.5 text-[#7AD0FF]" />+ Novo Cliente /
+          Aluno
         </button>
       </section>
 
-      {/* Filtros e Ordenação */}
       <section className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex gap-1.5 rounded-xl bg-white p-1 shadow-xs ring-1 ring-slate-200/80">
           {(
@@ -228,7 +230,6 @@ export function DashboardPage() {
         </div>
       </section>
 
-      {/* Lista de Clientes */}
       <section className="space-y-2.5">
         {filteredCustomers.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-8 text-center">
@@ -264,7 +265,8 @@ export function DashboardPage() {
                 className="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-3.5 shadow-xs transition hover:border-[#0099F0]/50"
               >
                 <Link
-                  to={`/cliente/${customer.id}`}
+                  to="/cliente/$id"
+                  params={{ id: customer.id }}
                   className="flex min-w-0 flex-1 items-center gap-3"
                 >
                   <div
@@ -320,7 +322,6 @@ export function DashboardPage() {
                   </div>
                 </Link>
 
-                {/* Botão rápido + para lançar direto do balcão */}
                 <button
                   type="button"
                   onClick={() => setQuickTxCustomer(customer)}
@@ -359,7 +360,11 @@ export function DashboardPage() {
           open={Boolean(qrCustomer)}
           onClose={() => setQrCustomer(null)}
           title={`PIX — ${qrCustomer.nome}`}
-          subtitle={qrCustomer.guardian?.nome || qrCustomer.turma_ou_apelido || undefined}
+          subtitle={
+            qrCustomer.guardian?.nome ||
+            qrCustomer.turma_ou_apelido ||
+            undefined
+          }
           amount={
             customers.find((c) => c.id === qrCustomer.id)?.saldo_atual ??
             qrCustomer.saldo_atual

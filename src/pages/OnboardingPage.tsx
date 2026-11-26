@@ -1,13 +1,13 @@
 import { ArrowRight, CheckCircle2, QrCode, Store } from "lucide-react";
-import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState, type FormEvent } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { useApp } from "@/contexts/AppContext";
 import { validatePixKey } from "@/lib/pix";
 import * as dataService from "@/services/dataService";
 import type { PixKeyType } from "@/types/database";
 
 export function OnboardingPage() {
-  const { isDemo, refreshAll, showToast } = useApp();
+  const { user, tenant, loading, isDemo, refreshAll, showToast } = useApp();
   const navigate = useNavigate();
 
   const [step, setStep] = useState<1 | 2>(1);
@@ -17,6 +17,15 @@ export function OnboardingPage() {
   const [pixNomeRecebedor, setPixNomeRecebedor] = useState("");
   const [pixCidade, setPixCidade] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (loading) return;
+    if (!user) {
+      void navigate({ to: "/login", replace: true });
+    } else if (tenant) {
+      void navigate({ to: "/", replace: true });
+    }
+  }, [loading, user, tenant, navigate]);
 
   const handleStep1 = (e: FormEvent) => {
     e.preventDefault();
@@ -51,7 +60,7 @@ export function OnboardingPage() {
       });
       await refreshAll();
       showToast("Cantina configurada! Bom trabalho no balcão.");
-      navigate("/", { replace: true });
+      void navigate({ to: "/", replace: true });
     } catch (err) {
       showToast(
         err instanceof Error ? err.message : "Erro ao criar cantina.",

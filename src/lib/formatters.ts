@@ -38,7 +38,8 @@ export function parseCurrencyInput(maskedValue: string): number {
 export function formatPhoneDisplay(raw: string | null | undefined): string {
   if (!raw) return "";
   const digits = raw.replace(/\D/g, "");
-  const local = digits.startsWith("55") && digits.length >= 12 ? digits.slice(2) : digits;
+  const local =
+    digits.startsWith("55") && digits.length >= 12 ? digits.slice(2) : digits;
   if (local.length === 11) {
     return `(${local.slice(0, 2)}) ${local.slice(2, 7)}-${local.slice(7)}`;
   }
@@ -58,7 +59,10 @@ export function maskPhoneInput(raw: string): string {
   return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
 }
 
-export function daysSince(isoDate: string | null | undefined, now = new Date()): number | null {
+export function daysSince(
+  isoDate: string | null | undefined,
+  now = new Date()
+): number | null {
   if (!isoDate) return null;
   const parsed = new Date(isoDate);
   if (Number.isNaN(parsed.getTime())) return null;
@@ -66,7 +70,10 @@ export function daysSince(isoDate: string | null | undefined, now = new Date()):
   return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
 }
 
-export function formatRelativeDays(isoDate: string | null | undefined, now = new Date()): string {
+export function formatRelativeDays(
+  isoDate: string | null | undefined,
+  now = new Date()
+): string {
   const diff = daysSince(isoDate, now);
   if (diff === null) return "sem lançamentos";
   if (diff === 0) return "hoje";
@@ -92,7 +99,9 @@ export function todayIsoDate(): string {
 
 export function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "?";
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+  const first = parts[0];
+  if (!first) return "?";
+  if (parts.length === 1) return first.slice(0, 2).toUpperCase();
+  const last = parts[parts.length - 1] ?? first;
+  return `${first.charAt(0)}${last.charAt(0)}`.toUpperCase();
 }

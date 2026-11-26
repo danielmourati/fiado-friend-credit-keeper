@@ -1,6 +1,9 @@
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { normalizeBrazilianPhone } from "@/lib/whatsapp";
-import { createInitialDemoDatabase, type DemoDatabase } from "@/services/demoSeed";
+import {
+  createInitialDemoDatabase,
+  type DemoDatabase,
+} from "@/services/demoSeed";
 import type {
   Customer,
   CustomerWithGuardian,
@@ -16,6 +19,7 @@ import type {
   Transaction,
   TransactionType,
 } from "@/types/database";
+import type { Database, Json } from "@/integrations/supabase/types";
 
 const DEMO_DB_KEY = "paula_lanches_demo_db_v1";
 const DEMO_MODE_KEY = "paula_lanches_demo_active_v1";
@@ -25,8 +29,29 @@ export interface AuthUser {
   email: string;
 }
 
+function safeGetStorage(key: string): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeSetStorage(key: string, value: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {
+    // ignore storage errors
+  }
+}
+
 function generateUuid(): string {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+  ) {
     return crypto.randomUUID();
   }
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
@@ -37,7 +62,7 @@ function generateUuid(): string {
 }
 
 function loadDemoDb(): DemoDatabase {
-  const raw = localStorage.getItem(DEMO_DB_KEY);
+  const raw = safeGetStorage(DEMO_DB_KEY);
   if (raw) {
     try {
       return JSON.parse(raw) as DemoDatabase;
@@ -46,27 +71,29 @@ function loadDemoDb(): DemoDatabase {
     }
   }
   const initial = createInitialDemoDatabase();
-  localStorage.setItem(DEMO_DB_KEY, JSON.stringify(initial));
+  safeSetStorage(DEMO_DB_KEY, JSON.stringify(initial));
   return initial;
 }
 
 function saveDemoDb(db: DemoDatabase): void {
-  localStorage.setItem(DEMO_DB_KEY, JSON.stringify(db));
+  safeSetStorage(DEMO_DB_KEY, JSON.stringify(db));
 }
 
 function recalculateDemoCustomer(db: DemoDatabase, customerId: string): void {
   const txs = db.transactions.filter((t) => t.customer_id === customerId);
   const saldo = txs.reduce(
-    (acc, tx) => (tx.tipo === "FIADO" ? acc + Number(tx.valor) : acc - Number(tx.valor)),
+    (acc, tx) =>
+      tx.tipo === "FIADO" ? acc + Number(tx.valor) : acc - Number(tx.valor),
     0
   );
   const roundedSaldo = Math.round(saldo * 100) / 100;
-  const lastAt =
-    txs.length > 0
-      ? txs.reduce((latest, tx) =>
-          tx.created_at > latest ? tx.created_at : latest
-        , txs[0].created_at)
-      : null;
+  const firstTx = txs[0];
+  const lastAt = firstTx
+    ? txs.reduce(
+        (latest, tx) => (tx.created_at > latest ? tx.created_at : latest),
+        firstTx.created_at
+      )
+    : null;
 
   db.customers = db.customers.map((c) =>
     c.id === customerId
@@ -75,15 +102,41 @@ function recalculateDemoCustomer(db: DemoDatabase, customerId: string): void {
   );
 }
 
+function mapTenantRow(row: unknown): Tenant {
+  const r = row as Record<string, unknown>;
+  const rawShortcuts = Array.isArray(r["atalhos_rapidos"])
+    ? (r["atalhos_rapidos"] as QuickShortcut[])
+    : [];
+  return {
+    id: String(r["id"] ?? ""),
+    owner_id: String(r["owner_id"] ?? ""),
+    nome_loja: String(r["nome_loja"] ?? ""),
+    logo_url: (r["logo_url"] as string | null) ?? null,
+    pix_tipo: (r["pix_tipo"] as PixKeyType | null) ?? null,
+    pix_chave: (r["pix_chave"] as string | null) ?? null,
+    pix_nome_recebedor: (r["pix_nome_recebedor"] as string | null) ?? null,
+    pix_cidade: (r["pix_cidade"] as string | null) ?? null,
+    mensagem_padrao_whatsapp: String(r["mensagem_padrao_whatsapp"] ?? ""),
+    atalhos_rapidos: rawShortcuts.map((s) => ({
+      nome: String(s.nome ?? ""),
+      valor: Number(s.valor ?? 0),
+    })),
+    plano: (r["plano"] as PlanType) === "PRO" ? "PRO" : "FREE",
+    mp_subscription_id: (r["mp_subscription_id"] as string | null) ?? null,
+    plano_expira_em: (r["plano_expira_em"] as string | null) ?? null,
+    created_at: String(r["created_at"] ?? ""),
+  };
+}
+
 export function isDemoSessionActive(): boolean {
   if (!isSupabaseConfigured) {
-    return localStorage.getItem(DEMO_MODE_KEY) !== "false";
+    return safeGetStorage(DEMO_MODE_KEY) !== "false";
   }
-  return localStorage.getItem(DEMO_MODE_KEY) === "true";
+  return safeGetStorage(DEMO_MODE_KEY) === "true";
 }
 
 export function setDemoSessionActive(active: boolean): void {
-  localStorage.setItem(DEMO_MODE_KEY, active ? "true" : "false");
+  safeSetStorage(DEMO_MODE_KEY, active ? "true" : "false");
 }
 
 export function resetDemoDatabase(): DemoDatabase {
@@ -99,6 +152,10 @@ export async function getCurrentUser(): Promise<{
   user: AuthUser | null;
   isDemo: boolean;
 }> {
+  if (typeof window === "undefined") {
+    return { user: null, isDemo: false };
+  }
+
   if (isSupabaseConfigured && supabase && !isDemoSessionActive()) {
     const { data } = await supabase.auth.getUser();
     if (data.user) {
@@ -120,7 +177,10 @@ export async function getCurrentUser(): Promise<{
   return { user: null, isDemo: false };
 }
 
-export async function signInWithEmail(email: string, password: string): Promise<void> {
+export async function signInWithEmail(
+  email: string,
+  password: string
+): Promise<void> {
   if (!isSupabaseConfigured || !supabase) {
     setDemoSessionActive(true);
     return;
@@ -130,7 +190,10 @@ export async function signInWithEmail(email: string, password: string): Promise<
   if (error) throw new Error(error.message);
 }
 
-export async function signUpWithEmail(email: string, password: string): Promise<{
+export async function signUpWithEmail(
+  email: string,
+  password: string
+): Promise<{
   needsEmailConfirmation: boolean;
 }> {
   if (!isSupabaseConfigured || !supabase) {
@@ -167,7 +230,7 @@ export async function fetchTenant(isDemo: boolean): Promise<Tenant | null> {
     .maybeSingle();
 
   if (error) throw new Error(error.message);
-  return data as Tenant | null;
+  return data ? mapTenantRow(data) : null;
 }
 
 export async function createTenantOnboarding(
@@ -187,7 +250,8 @@ export async function createTenantOnboarding(
       nome_loja: input.nome_loja.trim(),
       pix_tipo: input.pix_tipo ?? db.tenant.pix_tipo,
       pix_chave: input.pix_chave ?? db.tenant.pix_chave,
-      pix_nome_recebedor: input.pix_nome_recebedor ?? db.tenant.pix_nome_recebedor,
+      pix_nome_recebedor:
+        input.pix_nome_recebedor ?? db.tenant.pix_nome_recebedor,
       pix_cidade: input.pix_cidade ?? db.tenant.pix_cidade,
     };
     saveDemoDb(db);
@@ -212,7 +276,7 @@ export async function createTenantOnboarding(
     .single();
 
   if (error) throw new Error(error.message);
-  return data as Tenant;
+  return mapTenantRow(data);
 }
 
 export async function updateTenantSettings(
@@ -236,15 +300,30 @@ export async function updateTenantSettings(
     return db.tenant;
   }
 
+  const dbPatch: Database["public"]["Tables"]["tenants"]["Update"] = {};
+  if (patch.nome_loja !== undefined) dbPatch.nome_loja = patch.nome_loja;
+  if (patch.pix_tipo !== undefined) dbPatch.pix_tipo = patch.pix_tipo;
+  if (patch.pix_chave !== undefined) dbPatch.pix_chave = patch.pix_chave;
+  if (patch.pix_nome_recebedor !== undefined) {
+    dbPatch.pix_nome_recebedor = patch.pix_nome_recebedor;
+  }
+  if (patch.pix_cidade !== undefined) dbPatch.pix_cidade = patch.pix_cidade;
+  if (patch.mensagem_padrao_whatsapp !== undefined) {
+    dbPatch.mensagem_padrao_whatsapp = patch.mensagem_padrao_whatsapp;
+  }
+  if (patch.atalhos_rapidos !== undefined) {
+    dbPatch.atalhos_rapidos = patch.atalhos_rapidos as unknown as Json;
+  }
+
   const { data, error } = await supabase
     .from("tenants")
-    .update(patch)
+    .update(dbPatch)
     .eq("id", tenantId)
     .select("*")
     .single();
 
   if (error) throw new Error(error.message);
-  return data as Tenant;
+  return mapTenantRow(data);
 }
 
 // ----------------------------------------------------------------------------
@@ -256,7 +335,9 @@ export async function listGuardians(
 ): Promise<Guardian[]> {
   if (isDemo || !supabase) {
     const db = loadDemoDb();
-    return [...db.guardians].sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+    return [...db.guardians].sort((a, b) =>
+      a.nome.localeCompare(b.nome, "pt-BR")
+    );
   }
 
   const { data, error } = await supabase
@@ -360,7 +441,10 @@ export async function deleteGuardian(
     return;
   }
 
-  const { error } = await supabase.from("guardians").delete().eq("id", guardianId);
+  const { error } = await supabase
+    .from("guardians")
+    .delete()
+    .eq("id", guardianId);
   if (error) throw new Error(error.message);
 }
 
@@ -377,7 +461,8 @@ export async function listCustomers(
     return db.customers.map((c) => ({
       ...c,
       saldo_atual: Number(c.saldo_atual),
-      limite_credito: c.limite_credito !== null ? Number(c.limite_credito) : null,
+      limite_credito:
+        c.limite_credito !== null ? Number(c.limite_credito) : null,
       guardian: c.guardian_id ? (gMap.get(c.guardian_id) ?? null) : null,
     }));
   }
@@ -389,7 +474,7 @@ export async function listCustomers(
     .order("nome", { ascending: true });
 
   if (error) throw new Error(error.message);
-  return ((data ?? []) as CustomerWithGuardian[]).map((c) => ({
+  return ((data ?? []) as unknown as CustomerWithGuardian[]).map((c) => ({
     ...c,
     saldo_atual: Number(c.saldo_atual),
     limite_credito: c.limite_credito !== null ? Number(c.limite_credito) : null,
@@ -456,13 +541,12 @@ export async function createCustomer(
     .single();
 
   if (error) throw new Error(error.message);
+  const row = data as Customer;
   return {
-    ...(data as Customer),
-    saldo_atual: Number((data as Customer).saldo_atual),
+    ...row,
+    saldo_atual: Number(row.saldo_atual),
     limite_credito:
-      (data as Customer).limite_credito !== null
-        ? Number((data as Customer).limite_credito)
-        : null,
+      row.limite_credito !== null ? Number(row.limite_credito) : null,
   };
 }
 
@@ -533,13 +617,18 @@ export async function deleteCustomer(
   if (isDemo || !supabase) {
     const db = loadDemoDb();
     db.customers = db.customers.filter((c) => c.id !== customerId);
-    db.transactions = db.transactions.filter((t) => t.customer_id !== customerId);
+    db.transactions = db.transactions.filter(
+      (t) => t.customer_id !== customerId
+    );
     db.reminders = db.reminders.filter((r) => r.customer_id !== customerId);
     saveDemoDb(db);
     return;
   }
 
-  const { error } = await supabase.from("customers").delete().eq("id", customerId);
+  const { error } = await supabase
+    .from("customers")
+    .delete()
+    .eq("id", customerId);
   if (error) throw new Error(error.message);
 }
 
@@ -646,7 +735,8 @@ export async function createTransaction(
     });
   }
 
-  return { ...(data as Transaction), valor: Number((data as Transaction).valor) };
+  const row = data as Transaction;
+  return { ...row, valor: Number(row.valor) };
 }
 
 export async function deleteTransaction(
@@ -661,7 +751,10 @@ export async function deleteTransaction(
     return;
   }
 
-  const { error } = await supabase.from("transactions").delete().eq("id", tx.id);
+  const { error } = await supabase
+    .from("transactions")
+    .delete()
+    .eq("id", tx.id);
   if (error) throw new Error(error.message);
 }
 
@@ -701,7 +794,7 @@ export async function listReminders(
     .order("data_lembrete", { ascending: true });
 
   if (error) throw new Error(error.message);
-  return (data ?? []) as ReminderWithCustomer[];
+  return (data ?? []) as unknown as ReminderWithCustomer[];
 }
 
 export async function createReminder(
@@ -772,7 +865,10 @@ export async function deleteReminder(
     return;
   }
 
-  const { error } = await supabase.from("reminders").delete().eq("id", reminderId);
+  const { error } = await supabase
+    .from("reminders")
+    .delete()
+    .eq("id", reminderId);
   if (error) throw new Error(error.message);
 }
 
@@ -783,16 +879,21 @@ export async function getPublicCustomerStatement(
   publicToken: string
 ): Promise<PublicCustomerStatement | null> {
   if (supabase) {
-    const { data, error } = await supabase.rpc("get_public_customer_statement", {
-      p_token: publicToken,
-    });
+    const { data, error } = await supabase.rpc(
+      "get_public_customer_statement",
+      {
+        p_token: publicToken,
+      }
+    );
     if (!error && data) {
-      return data as PublicCustomerStatement;
+      return data as unknown as PublicCustomerStatement;
     }
     if (!isDemoSessionActive() && error) {
       throw new Error(error.message);
     }
   }
+
+  if (typeof window === "undefined") return null;
 
   const db = loadDemoDb();
   const customer = db.customers.find((c) => c.public_token === publicToken);
@@ -845,16 +946,21 @@ export async function getPublicGuardianStatement(
   guardianId: string
 ): Promise<PublicGuardianStatement | null> {
   if (supabase) {
-    const { data, error } = await supabase.rpc("get_public_guardian_statement", {
-      p_guardian_id: guardianId,
-    });
+    const { data, error } = await supabase.rpc(
+      "get_public_guardian_statement",
+      {
+        p_guardian_id: guardianId,
+      }
+    );
     if (!error && data) {
-      return data as PublicGuardianStatement;
+      return data as unknown as PublicGuardianStatement;
     }
     if (!isDemoSessionActive() && error) {
       throw new Error(error.message);
     }
   }
+
+  if (typeof window === "undefined") return null;
 
   const db = loadDemoDb();
   const guardian = db.guardians.find((g) => g.id === guardianId);
@@ -927,14 +1033,19 @@ export async function createMpCheckoutSession(): Promise<{
     );
   }
 
-  const { data, error } = await supabase.functions.invoke("create-mp-checkout", {
-    body: {
-      origin: window.location.origin,
-    },
-  });
+  const { data, error } = await supabase.functions.invoke(
+    "create-mp-checkout",
+    {
+      body: {
+        origin: typeof window !== "undefined" ? window.location.origin : "",
+      },
+    }
+  );
 
   if (error) {
-    throw new Error(error.message || "Erro ao iniciar checkout do Mercado Pago.");
+    throw new Error(
+      error.message || "Erro ao iniciar checkout do Mercado Pago."
+    );
   }
 
   const checkoutUrl = (data as { checkout_url?: string } | null)?.checkout_url;

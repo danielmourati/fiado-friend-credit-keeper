@@ -9,14 +9,17 @@ import {
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link } from "@tanstack/react-router";
 import { formatCurrencyBRL, formatShortDate } from "@/lib/formatters";
 import { generatePixBrCode } from "@/lib/pix";
 import * as dataService from "@/services/dataService";
 import type { PublicGuardianStatement } from "@/types/database";
 
-export function PublicGuardianStatementPage() {
-  const { guardian_id } = useParams<{ guardian_id: string }>();
+export function PublicGuardianStatementPage({
+  guardianId,
+}: {
+  guardianId: string;
+}) {
   const [statement, setStatement] = useState<PublicGuardianStatement | null>(
     null
   );
@@ -25,7 +28,7 @@ export function PublicGuardianStatementPage() {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    if (!guardian_id) {
+    if (!guardianId) {
       setLoading(false);
       setError("Link inválido.");
       return;
@@ -34,7 +37,7 @@ export function PublicGuardianStatementPage() {
     let cancelled = false;
     setLoading(true);
     dataService
-      .getPublicGuardianStatement(guardian_id)
+      .getPublicGuardianStatement(guardianId)
       .then((res) => {
         if (cancelled) return;
         if (!res) {
@@ -57,7 +60,7 @@ export function PublicGuardianStatementPage() {
     return () => {
       cancelled = true;
     };
-  }, [guardian_id]);
+  }, [guardianId]);
 
   const pixBrCode = useMemo(() => {
     if (!statement || statement.restricted) return null;
@@ -121,8 +124,8 @@ export function PublicGuardianStatementPage() {
           </h1>
           <p className="mt-1 text-xs text-slate-500">
             A cantina <strong>{statement.tenant.nome_loja}</strong> ainda não
-            ativou o extrato consolidado por responsável (Plano PRO). Solicite
-            o link individual de cada aluno.
+            ativou o extrato consolidado por responsável (Plano PRO). Solicite o
+            link individual de cada aluno.
           </p>
         </div>
       </div>
@@ -210,7 +213,6 @@ export function PublicGuardianStatementPage() {
           ) : null}
         </section>
 
-        {/* Detalhamento por aluno */}
         {students.map((student) => (
           <section
             key={student.id}
@@ -238,7 +240,8 @@ export function PublicGuardianStatementPage() {
                   {formatCurrencyBRL(Number(student.saldo_atual))}
                 </p>
                 <Link
-                  to={`/c/${student.public_token}`}
+                  to="/c/$public_token"
+                  params={{ public_token: student.public_token }}
                   className="text-[11px] font-bold text-[#0099F0] hover:underline"
                 >
                   Ver extrato individual

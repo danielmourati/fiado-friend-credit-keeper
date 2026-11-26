@@ -9,14 +9,16 @@ import {
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
 import { formatCurrencyBRL, formatShortDate } from "@/lib/formatters";
 import { generatePixBrCode } from "@/lib/pix";
 import * as dataService from "@/services/dataService";
 import type { PublicCustomerStatement } from "@/types/database";
 
-export function PublicCustomerStatementPage() {
-  const { public_token } = useParams<{ public_token: string }>();
+export function PublicCustomerStatementPage({
+  publicToken,
+}: {
+  publicToken: string;
+}) {
   const [statement, setStatement] = useState<PublicCustomerStatement | null>(
     null
   );
@@ -25,7 +27,7 @@ export function PublicCustomerStatementPage() {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    if (!public_token) {
+    if (!publicToken) {
       setLoading(false);
       setError("Link inválido.");
       return;
@@ -34,7 +36,7 @@ export function PublicCustomerStatementPage() {
     let cancelled = false;
     setLoading(true);
     dataService
-      .getPublicCustomerStatement(public_token)
+      .getPublicCustomerStatement(publicToken)
       .then((res) => {
         if (cancelled) return;
         if (!res) {
@@ -57,7 +59,7 @@ export function PublicCustomerStatementPage() {
     return () => {
       cancelled = true;
     };
-  }, [public_token]);
+  }, [publicToken]);
 
   const pixBrCode = useMemo(() => {
     if (!statement) return null;
@@ -120,7 +122,6 @@ export function PublicCustomerStatementPage() {
 
   return (
     <div className="min-h-screen bg-[#F4F8FC] pb-10">
-      {/* Cabeçalho da Cantina */}
       <header className="bg-gradient-to-br from-[#22328B] to-[#0099F0] px-4 pb-16 pt-6 text-white">
         <div className="mx-auto flex max-w-lg items-center gap-3">
           <img
@@ -138,7 +139,6 @@ export function PublicCustomerStatementPage() {
       </header>
 
       <main className="mx-auto -mt-10 max-w-lg space-y-4 px-4">
-        {/* Card do Saldo */}
         <section className="rounded-3xl border border-slate-200/70 bg-white p-5 shadow-md">
           <div className="flex items-start justify-between gap-2">
             <div>
@@ -181,7 +181,6 @@ export function PublicCustomerStatementPage() {
             </p>
           </div>
 
-          {/* QR Code PIX */}
           {hasDebt && pixBrCode ? (
             <div className="mt-4 rounded-2xl border border-[#0099F0]/30 bg-[#E8F5FE]/60 p-4 text-center">
               <p className="flex items-center justify-center gap-1.5 text-xs font-extrabold uppercase tracking-wide text-[#22328B]">
@@ -224,7 +223,6 @@ export function PublicCustomerStatementPage() {
           ) : null}
         </section>
 
-        {/* Últimos Lançamentos */}
         <section className="rounded-3xl border border-slate-200/70 bg-white p-5 shadow-xs">
           <h3 className="text-sm font-extrabold uppercase tracking-wide text-slate-700">
             Detalhamento dos Lançamentos
@@ -259,7 +257,8 @@ export function PublicCustomerStatementPage() {
                       </div>
                       <div className="min-w-0">
                         <p className="truncate text-xs font-bold text-slate-800">
-                          {tx.descricao || (isFiado ? "Consumo fiado" : "Pagamento")}
+                          {tx.descricao ||
+                            (isFiado ? "Consumo fiado" : "Pagamento")}
                         </p>
                         <p className="text-[11px] text-slate-500">
                           {formatShortDate(tx.data_lancamento)}

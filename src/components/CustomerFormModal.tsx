@@ -1,6 +1,6 @@
 import { Crown, GraduationCap, User, UserPlus, X } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "@tanstack/react-router";
 import { useApp } from "@/contexts/AppContext";
 import {
   formatPhoneDisplay,
@@ -15,8 +15,8 @@ import type { CustomerWithGuardian } from "@/types/database";
 interface CustomerFormModalProps {
   open: boolean;
   onClose: () => void;
-  editingCustomer?: CustomerWithGuardian | null;
-  onSaved?: (customerId: string) => void;
+  editingCustomer?: CustomerWithGuardian | null | undefined;
+  onSaved?: ((customerId: string) => void) | undefined;
 }
 
 export function CustomerFormModal({
@@ -25,7 +25,8 @@ export function CustomerFormModal({
   editingCustomer,
   onSaved,
 }: CustomerFormModalProps) {
-  const { tenant, isDemo, customers, guardians, refreshAll, showToast } = useApp();
+  const { tenant, isDemo, customers, guardians, refreshAll, showToast } =
+    useApp();
 
   const [mode, setMode] = useState<"ALUNO" | "COMUM">("ALUNO");
   const [nome, setNome] = useState("");
@@ -137,7 +138,11 @@ export function CustomerFormModal({
         savedId = updated.id;
         showToast("Cadastro atualizado com sucesso!");
       } else {
-        const created = await dataService.createCustomer(isDemo, tenant, payload);
+        const created = await dataService.createCustomer(
+          isDemo,
+          tenant,
+          payload
+        );
         savedId = created.id;
         showToast("Cliente cadastrado com sucesso!");
       }
@@ -194,8 +199,10 @@ export function CustomerFormModal({
             </Link>
           </div>
         ) : (
-          <form onSubmit={(e) => void handleSubmit(e)} className="mt-4 space-y-4">
-            {/* Toggle Aluno vs Cliente Comum */}
+          <form
+            onSubmit={(e) => void handleSubmit(e)}
+            className="mt-4 space-y-4"
+          >
             <div className="grid grid-cols-2 gap-2 rounded-2xl bg-[#F4F8FC] p-1">
               <button
                 type="button"
@@ -233,7 +240,9 @@ export function CustomerFormModal({
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
                 placeholder={
-                  mode === "ALUNO" ? "Ex: Lucas Oliveira" : "Ex: Prof. Ana Cláudia"
+                  mode === "ALUNO"
+                    ? "Ex: Lucas Oliveira"
+                    : "Ex: Prof. Ana Cláudia"
                 }
                 className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none transition focus:border-[#0099F0] focus:ring-2 focus:ring-[#0099F0]/20"
               />
@@ -276,7 +285,6 @@ export function CustomerFormModal({
                   </div>
                 </div>
 
-                {/* Vínculo com Responsável Financeiro */}
                 <div className="rounded-2xl border border-slate-200 bg-[#F4F8FC]/70 p-3.5">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-xs font-bold uppercase tracking-wide text-[#22328B]">
@@ -288,7 +296,9 @@ export function CustomerFormModal({
                       className="inline-flex items-center gap-1 rounded-lg bg-[#E8F5FE] px-2.5 py-1 text-xs font-bold text-[#22328B] transition hover:bg-[#d6edfd]"
                     >
                       <UserPlus className="h-3.5 w-3.5" />
-                      {createNewGuardian ? "Selecionar existente" : "+ Novo Responsável"}
+                      {createNewGuardian
+                        ? "Selecionar existente"
+                        : "+ Novo Responsável"}
                     </button>
                   </div>
 
@@ -399,7 +409,11 @@ export function CustomerFormModal({
                 disabled={submitting}
                 className="flex-1 rounded-2xl bg-[#22328B] py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#18256B] disabled:opacity-60"
               >
-                {submitting ? "Salvando..." : isEditing ? "Salvar Alterações" : "Cadastrar"}
+                {submitting
+                  ? "Salvando..."
+                  : isEditing
+                    ? "Salvar Alterações"
+                    : "Cadastrar"}
               </button>
             </div>
           </form>

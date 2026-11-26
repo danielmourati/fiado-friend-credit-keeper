@@ -10,24 +10,24 @@ export function normalizeBrazilianPhone(raw: string): string {
 }
 
 export function getPublicOrigin(): string {
-  const envUrl = import.meta.env.VITE_APP_URL as string | undefined;
+  const envUrl = import.meta.env["VITE_APP_URL"] as string | undefined;
   if (envUrl && envUrl.trim()) {
     return envUrl.replace(/\/+$/, "");
   }
   if (typeof window !== "undefined" && window.location?.origin) {
     return window.location.origin;
   }
-  return "https://paulalanches.app";
+  return "https://fiado-friend-credit-keeper.lovable.app";
 }
 
 export interface CustomerBillingMessageParams {
-  template?: string | null;
+  template?: string | null | undefined;
   cantinaNome: string;
   clienteNome: string;
-  responsavelNome?: string | null;
+  responsavelNome?: string | null | undefined;
   valorDevido: number;
   publicLink: string;
-  pixCopiaECola?: string | null;
+  pixCopiaECola?: string | null | undefined;
 }
 
 const DEFAULT_TEMPLATE =
@@ -70,7 +70,7 @@ export function buildGuardianBillingMessage(params: {
   alunosResumo: { nome: string; saldo: number }[];
   valorTotal: number;
   publicLink: string;
-  pixCopiaECola?: string | null;
+  pixCopiaECola?: string | null | undefined;
 }): string {
   const linhasAlunos = params.alunosResumo
     .filter((a) => a.saldo > 0)

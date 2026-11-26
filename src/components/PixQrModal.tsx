@@ -9,14 +9,14 @@ interface PixQrModalProps {
   open: boolean;
   onClose: () => void;
   title: string;
-  subtitle?: string;
+  subtitle?: string | undefined;
   amount: number;
   pixTipo: PixKeyType | null;
   pixChave: string | null;
   pixNomeRecebedor: string | null;
   pixCidade: string | null;
-  txid?: string;
-  onSendWhatsApp?: () => void;
+  txid?: string | undefined;
+  onSendWhatsApp?: (() => void) | undefined;
 }
 
 export function PixQrModal({
@@ -51,7 +51,8 @@ export function PixQrModal({
     } catch (err) {
       return {
         code: null,
-        error: err instanceof Error ? err.message : "Erro ao gerar código PIX.",
+        error:
+          err instanceof Error ? err.message : "Erro ao gerar código PIX.",
       };
     }
   }, [pixTipo, pixChave, pixNomeRecebedor, pixCidade, amount, txid]);
@@ -65,7 +66,7 @@ export function PixQrModal({
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     } catch {
-      // Fallback para contextos sem clipboard API
+      // Fallback silencioso
     }
   };
 

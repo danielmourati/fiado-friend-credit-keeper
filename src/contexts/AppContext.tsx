@@ -48,9 +48,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [guardians, setGuardians] = useState<Guardian[]>([]);
   const [reminders, setReminders] = useState<ReminderWithCustomer[]>([]);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
-  const [hideValues, setHideValues] = useState<boolean>(() => {
-    return localStorage.getItem(HIDE_VALUES_KEY) === "true";
-  });
+  const [hideValues, setHideValues] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setHideValues(window.localStorage.getItem(HIDE_VALUES_KEY) === "true");
+    }
+  }, []);
 
   const dismissToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
@@ -70,12 +74,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const toggleHideValues = useCallback(() => {
     setHideValues((prev) => {
       const next = !prev;
-      localStorage.setItem(HIDE_VALUES_KEY, String(next));
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(HIDE_VALUES_KEY, String(next));
+      }
       return next;
     });
   }, []);
 
   const loadWorkspace = useCallback(async () => {
+    if (typeof window === "undefined") return;
     setLoading(true);
     try {
       const sessionInfo = await dataService.getCurrentUser();
@@ -100,17 +107,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const [loadedCustomers, loadedGuardians, loadedReminders] = await Promise.all([
-        dataService.listCustomers(sessionInfo.isDemo, loadedTenant.id),
-        dataService.listGuardians(sessionInfo.isDemo, loadedTenant.id),
-        dataService.listReminders(sessionInfo.isDemo, loadedTenant.id),
-      ]);
+      const [loadedCustomers, loadedGuardians, loadedReminders] =
+        await Promise.all([
+          dataService.listCustomers(sessionInfo.isDemo, loadedTenant.id),
+          dataService.listGuardians(sessionInfo.isDemo, loadedTenant.id),
+          dataService.listReminders(sessionInfo.isDemo, loadedTenant.id),
+        ]);
 
       setCustomers(loadedCustomers);
       setGuardians(loadedGuardians);
       setReminders(loadedReminders);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Erro ao carregar dados.";
+      const msg =
+        err instanceof Error ? err.message : "Erro ao carregar dados.";
       showToast(msg, "error");
     } finally {
       setLoading(false);
@@ -120,7 +129,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     void loadWorkspace();
 
-    if (isSupabaseConfigured && supabase) {
+    if (typeof window !== "undefined" && isSupabaseConfigured && supabase) {
       const {
         data: { subscription },
       } = supabase.auth.onAuthStateChange(() => {

@@ -1,12 +1,13 @@
 import { ArrowRight, Lock, Mail, Sparkles } from "lucide-react";
-import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState, type FormEvent } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { useApp } from "@/contexts/AppContext";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import * as dataService from "@/services/dataService";
 
 export function AuthPage() {
-  const { enterDemoMode, refreshAll, showToast } = useApp();
+  const { user, tenant, loading, enterDemoMode, refreshAll, showToast } =
+    useApp();
   const navigate = useNavigate();
 
   const [mode, setMode] = useState<"LOGIN" | "SIGNUP">("LOGIN");
@@ -14,11 +15,20 @@ export function AuthPage() {
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  useEffect(() => {
+    if (loading) return;
+    if (user && tenant) {
+      void navigate({ to: "/", replace: true });
+    } else if (user && !tenant) {
+      void navigate({ to: "/onboarding", replace: true });
+    }
+  }, [loading, user, tenant, navigate]);
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!isSupabaseConfigured) {
       await enterDemoMode();
-      navigate("/", { replace: true });
+      void navigate({ to: "/", replace: true });
       return;
     }
 
@@ -27,7 +37,7 @@ export function AuthPage() {
       if (mode === "LOGIN") {
         await dataService.signInWithEmail(email, password);
         await refreshAll();
-        navigate("/", { replace: true });
+        void navigate({ to: "/", replace: true });
       } else {
         const res = await dataService.signUpWithEmail(email, password);
         if (res.needsEmailConfirmation) {
@@ -37,7 +47,7 @@ export function AuthPage() {
           );
         } else {
           await refreshAll();
-          navigate("/onboarding", { replace: true });
+          void navigate({ to: "/onboarding", replace: true });
         }
       }
     } catch (err) {
@@ -52,7 +62,7 @@ export function AuthPage() {
 
   const handleDemoClick = async () => {
     await enterDemoMode();
-    navigate("/", { replace: true });
+    void navigate({ to: "/", replace: true });
   };
 
   return (
@@ -109,7 +119,10 @@ export function AuthPage() {
           </button>
         </div>
 
-        <form onSubmit={(e) => void handleSubmit(e)} className="mt-4 space-y-3.5">
+        <form
+          onSubmit={(e) => void handleSubmit(e)}
+          className="mt-4 space-y-3.5"
+        >
           <div>
             <label className="block text-xs font-bold uppercase tracking-wide text-slate-600">
               E-mail
