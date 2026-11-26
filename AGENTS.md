@@ -28,3 +28,6 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+## Project structure
+- Domain logic lives in `src/features/<domain>` and domain UI in `src/components/<domain>` (clientes, fiados, pagamentos), to keep each business area isolated.
